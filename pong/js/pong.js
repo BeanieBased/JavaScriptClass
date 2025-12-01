@@ -8,18 +8,6 @@ var timer = setInterval(main, 1000/60)
 //global friction variable
 var fy = .97
 
-// p1 setup
-var p1 = new Box();
-p1.w = 20
-p1.h = 150
-p1.x = 0 + p1.w / 2
-
-// p2 setup
-var p2 = new Box();
-p2.w = 20
-p2.h = 150
-p2.x = c.width - p2.w / 2
-
 //ball setup
 var ball = new Box();
 ball.w = 20
@@ -27,6 +15,33 @@ ball.h = 20
 ball.vx = -2
 ball.vy = -2
 ball.color = `black`
+
+//player
+let player = [];
+
+player[0] =  new Player("Player 1")
+player[1] = new Player("Player 2")
+
+player[0].pad = new Box();
+player[0].pad.w = 20
+player[0].pad.h = 150
+player[0].pad.x = 0 + player[0].pad.w / 2
+
+player[1].pad = new Box();
+player[1].pad.w = 20
+player[1].pad.h = 150
+player[1].pad.x = c.width - player[1].pad.w / 2
+
+console.log(player);
+
+//pads
+let pad = [];
+
+pad[0] = player[0].pad;
+pad[1] = player[1].pad;
+
+//scoreboard
+let scoreDivs = document.querySelectorAll("#score div");
 
 function main()
 {
@@ -36,60 +51,58 @@ function main()
     //p1 accelerates when key is pressed 
     if(keys[`w`])
     {
-       p1.vy += -p1.force
+       pad[0].vy += -pad[0].force
     }
 
     if(keys[`s`])
     {
-        p1.vy += p1.force
+        pad[0].vy += pad[0].force
     }
 
     //p2 accelerates when key is pressed
     if(keys[`ArrowUp`])
     {
-        p2.vy += -p2.force
+        pad[1].vy += -pad[1].force
     }
 
     if(keys[`ArrowDown`])
     {
-        p2.vy += p2.force
+        pad[1].vy += pad[1].force
     }
-    //applies friction
-    p1.vy *= fy
-    p2.vy *= fy
-    //player movement
-    p1.move();
-    p2.move();
+
+    //applies friction and movement for paddles
+    for (let i = 0; i < pad.length; i++) {
+        pad[i].vy *= fy
+        pad[i].move()
+    }
 
     //ball movement
     ball.move()
 
-    //p1 collision
-    if(p1.y < 0+p1.h/2)
-    {
-        p1.y = 0+p1.h/2
-    }
-    if(p1.y > c.height-p1.h/2)
-    {
-        p1.y = c.height-p1.h/2
-    }
-
-    //p2 collision
-    if(p2.y < 0+p1.h/2)
-    {
-        p2.y = 0+p2.h/2
-    }
-    if(p2.y > c.height-p2.h/2)
-    {
-        p2.y = c.height-p2.h/2
+    //paddle collision with top/bottom
+    for (let i = 0; i < pad.length; i++) {
+        if(pad[i].y < 0 + pad[i].h / 2) {
+            pad[i].y = 0 + pad[i].h / 2
+        }
+        if(pad[i].y > c.height - pad[i].h / 2) {
+            pad[i].y = c.height - pad[i].h / 2
+        }
     }
 
     //ball collision 
-   if (ball.x < 0 || ball.x > c.width) {
-    ball.x = c.width / 2
-    ball.y = c.height / 2
-    ball.vx = -ball.vx //this will send the ball towards player who lost :p
+    if (ball.x < 0 || ball.x > c.width) {
+        if (ball.x < 0) {
+            player[1].score++;
+        } else if (ball.x > c.width) {  //SCORING STUFF!!!!
+            player[0].score++;
+        }
+        console.log(player[0].score + " | " + player[1].score);
+
+        ball.x = c.width / 2
+        ball.y = c.height / 2
+        ball.vx = -ball.vx //this will send the ball towards player who lost :p
     }
+
     if(ball.x > c.width)
     {
         ball.x = c.width
@@ -104,25 +117,28 @@ function main()
     {
         ball.y = c.height
         ball.vy = -ball.vy
-       
     }
 
-    //p1 with ball collision
-    if(ball.collide(p1))
-    {
-        ball.x = p1.x + p1.w/2 + ball.w/2
-        ball.vx = -ball.vx;
-    }
-
-    //p2 with ball collision
-    if(ball.collide(p2))
-    {
-        ball.x = p2.x + p2.w/2 + ball.w/2
-        ball.vx = -ball.vx;
+    //paddle with ball collision
+    for (let i = 0; i < pad.length; i++) {
+        if(ball.collide(pad[i])) {
+            if (i === 0) {
+                ball.x = pad[i].x + pad[i].w / 2 + ball.w / 2
+            } else {
+                ball.x = pad[i].x - pad[i].w / 2 - ball.w / 2
+            }
+            ball.vx = -ball.vx;
+        }
     }
 
     //draw the objects
-    p1.draw()
+    for (let i = 0; i < pad.length; i++) {
+        pad[i].draw()
+    }
     ball.draw()
-    p2.draw()
+
+    //update score display
+    for (let i = 0; i < scoreDivs.length; i++) {
+        scoreDivs[i].innerText = player[i].score;
+    }
 }
